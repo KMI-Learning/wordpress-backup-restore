@@ -1,0 +1,36 @@
+#!/bin/bash
+
+read -p "This will overwrite your existing Wordpress site, are you sure you wish to continue (y/n)? " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+
+cd /var/www/wordpress-backups/
+
+#Find most recent db and file backups
+FILES=`/bin/ls -Art |grep wordpressfiles|tail -n 1`
+DB=`/bin/ls -Art |grep wordpressdb|tail -n 1`
+
+#Make a timestamp
+TIMESTAMP=`/bin/date +%m-%d-%y-%H%M`
+
+#Move wordpress files directory insead of overwriting or deleting
+/bin/mv <%= @wp_dir  %> <%= @wp_dir  %>.$TIMESTAMP
+/bin/mkdir <%= @wp_dir  %>
+
+#Extract wordpress files directory from backup
+/bin/tar -xzvf /var/www/wordpress-backups/$FILES -C <%= @wp_dir  %>
+
+#Make one last DB backup in case somethings bad happens
+/usr/bin/mysqldump -u<%= @db_user  %> -p<%= @db_pass  %> <%= @db_database  %> > wpdb.lifesaver.sql
+
+#Extract the db.tar.gz
+/bin/tar -xzvf /var/www/wordpress-backups/$DB
+
+#DB restore here we go
+/usr/bin/mysql -u<%= @db_user  %> -p<%= @db_pass  %> <%= @db_database  %> < wordpressdb.sql
+
+#Cleanup the leftovers
+/bin/rm -f <%= @db_database  %>.sql
+
+fi

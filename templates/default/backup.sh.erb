@@ -1,0 +1,17 @@
+#!/bin/bash
+cd /var/www/wordpress-backups/
+
+#Old DB Deletion and Files Script
+/usr/bin/find /var/www/wordpress-backups -name "*.tar.gz" -mtime +7 -exec rm -f {};
+
+#Stamps the file name with a date
+TIMESTAMP=`/bin/date +%m-%d-%y-%H%M`
+
+#DB Backup Script
+/usr/bin/mysqldump -u<%= @db_user  %> -p<%= @db_pass  %> <%= @db_database  %> > <%= @db_database  %>.sql
+/bin/tar -czpf /var/www/wordpress-backups/<%= @db_database  %>.$TIMESTAMP.tar.gz <%= @db_database  %>.sql
+
+/bin/rm -f <%= @db_database  %>.sql
+
+#Backing up Wordpress files
+/bin/tar -czpf /var/www/wordpress-backups/wordpressfiles.$TIMESTAMP.tar.gz -C <%= @wp_dir  %> .
